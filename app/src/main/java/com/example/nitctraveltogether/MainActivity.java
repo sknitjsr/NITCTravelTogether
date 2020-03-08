@@ -3,8 +3,12 @@ package com.example.nitctraveltogether;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -19,7 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
-
+    private static final int MY_PERMISSION_REQUEST_READ_FINE_LOCATION = 100;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener firebaseAuthListener;
     @Override
@@ -93,13 +97,26 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            if(mAuth.getCurrentUser().isEmailVerified()){
+                            if(mAuth.getCurrentUser().isEmailVerified()) {
                                 Toast.makeText(MainActivity.this, "Authentication Success.",
                                         Toast.LENGTH_SHORT).show();
                                 FirebaseUser user = mAuth.getCurrentUser();
-                                Intent i=new Intent(MainActivity.this, home.class);
-                                startActivity(i);
+
+                                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                                        == PackageManager.PERMISSION_GRANTED) {
+                                    Intent i = new Intent(MainActivity.this, home.class);
+
+                                    startActivity(i);
+                                } else {
+
+
+                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                            MY_PERMISSION_REQUEST_READ_FINE_LOCATION);
+                                }
+
                             }
+
                             else{
                                 Toast.makeText(MainActivity.this, "Please verify your email.",
                                         Toast.LENGTH_SHORT).show();
@@ -115,5 +132,30 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
+    }
+
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSION_REQUEST_READ_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent i=new Intent(MainActivity.this, home.class);
+
+                    startActivity(i);
+                    // permission was granted, yay! Do the contacts-related task you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 }
